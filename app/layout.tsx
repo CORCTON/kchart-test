@@ -1,3 +1,4 @@
+import "@radix-ui/themes/styles.css";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -13,7 +14,9 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="zh">
-			<body>{children}</body>
+			<body>
+				{children}
+			</body>
 		</html>
 	);
 }
