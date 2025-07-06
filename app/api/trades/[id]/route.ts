@@ -14,11 +14,17 @@ export async function GET(
 
   // Simulate a new trade
   if (Math.random() > 0.3) {
+    const currentData = projectData.current.data;
+    const lastPrice =
+      currentData.length > 0
+        ? currentData[currentData.length - 1].price
+        : projectData.current.open;
+
     const newTrade: Trade = {
       timestamp: Date.now(),
-      price: projectData.current.data[projectData.current.data.length - 1].price,
+      price: lastPrice,
       quantity: Math.floor(Math.random() * 50) + 1,
-      type: Math.random() > 0.5 ? 'buy' : 'sell',
+      type: Math.random() > 0.5 ? "buy" : "sell",
     };
     projectData.trades.unshift(newTrade);
   }

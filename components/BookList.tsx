@@ -1,3 +1,3 @@
-export default function bookList() {
+export default function BookList() {
     return <div>bookList</div>;
 }

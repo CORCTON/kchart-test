@@ -12,8 +12,13 @@ export async function GET(
     return NextResponse.json({ error: 'Project not found' }, { status: 404 });
   }
 
-  // Return last 29 days of historical data
-  const historicalData = projectData.historical.slice(-29);
+  const allHistoricalData = projectData.historical;
+  
+  // If data is less than 14 days, show all; otherwise, show the last 14 days.
+  const historicalData =
+    allHistoricalData.length <14
+      ? allHistoricalData
+      : allHistoricalData.slice(-14);
 
   return NextResponse.json(historicalData);
 }

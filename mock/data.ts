@@ -44,7 +44,7 @@ export interface ProjectData {
 const generateRandomData = (id: string): ProjectData => {
   const historical: DailyData[] = [];
   const today = new Date();
-  for (let i = 28; i >= 0; i--) {
+  for (let i = 14; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(today.getDate() - i);
     historical.push({
@@ -63,7 +63,7 @@ const generateRandomData = (id: string): ProjectData => {
   };
 
   const orderbook: Order[] = [];
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 14; i++) {
     orderbook.push({
       type: Math.random() > 0.5 ? 'buy' : 'sell',
       quantity: Math.floor(Math.random() * 100),
@@ -72,12 +72,14 @@ const generateRandomData = (id: string): ProjectData => {
   }
 
   const trades: Trade[] = [];
-  for (let i = 0; i < 20; i++) {
+  const basePrice = current.open;
+  for (let i = 0; i < 14; i++) {
     trades.push({
-      timestamp: Date.now()- Math.floor(Math.random() * 100000),
-      price: Math.random() * 100 + 100,
+      timestamp: Date.now() - Math.floor(Math.random() * 100000),
+      // Price is based on the current open price with some variance
+      price: basePrice + (Math.random() - 0.5) * 10,
       quantity: Math.floor(Math.random() * 50),
-      type: Math.random() > 0.5 ? 'buy' : 'sell',
+      type: Math.random() > 0.5 ? "buy" : "sell",
     });
   }
 
