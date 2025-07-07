@@ -156,7 +156,7 @@ export default function TradeKCharts({ initialData }: TradeKChartsProps) {
           ? dataRef.current[dataIndex - 1].close
           : dataPoint.open;
       const change = ((dataPoint.close - prevClose) / prevClose) * 100;
-      const changeColor = change >= 0 ? "text-green-400" : "text-red-400";
+      const changeColor = change >= 0 ? "text-red-400" : "text-green-400";
       let limitStatus = "";
       if (change >= 9.95) limitStatus = "涨停";
       if (change <= -9.95) limitStatus = "跌停";
@@ -322,11 +322,11 @@ export default function TradeKCharts({ initialData }: TradeKChartsProps) {
           <div className="border-t border-gray-500 my-1.5" />
           <div className="flex justify-between items-center">
             <span className="text-gray-300">买入量</span>
-            <span id="tooltip-buy-volume" className="text-green-400" />
+            <span id="tooltip-buy-volume" className="text-red-400" />
           </div>
           <div className="flex justify-between items-center mt-1">
             <span className="text-gray-300">卖出量</span>
-            <span id="tooltip-sell-volume" className="text-red-400" />
+            <span id="tooltip-sell-volume" className="text-green-400" />
           </div>
           <div className="flex justify-between items-center mt-1">
             <span className="text-gray-300">总成交量</span>

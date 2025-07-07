@@ -68,7 +68,7 @@ export default function TickersList({ initialData }: TickersListProps) {
               </div>
               <div
                 className={`text-center font-medium ${
-                  trade.type === "buy" ? "text-green-600" : "text-red-600"
+                  trade.type === "buy" ? "text-red-600" : "text-green-600"
                 }`}
               >
                 {trade.price.toFixed(2)}

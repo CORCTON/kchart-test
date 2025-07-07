@@ -51,18 +51,18 @@ export default function BookList({ initialData }: BookListProps) {
       {/* 买卖比例显示 */}
       <div className="mb-6 flex-shrink-0">
       <div className="flex items-center gap-2">
-        <span className="text-sm font-medium text-green-600">{buyPercentage.toFixed(1)}%</span>
+        <span className="text-sm font-medium text-red-600">{buyPercentage.toFixed(1)}%</span>
         <div className="flex-1 h-4 rounded-sm overflow-hidden flex">
         <div 
-          className="bg-green-500 h-full"
+          className="bg-red-500 h-full"
           style={{ width: `${buyPercentage}%` }}
         />
         <div 
-          className="bg-red-500 h-full"
+          className="bg-green-500 h-full"
           style={{ width: `${sellPercentage}%` }}
         />
         </div>
-        <span className="text-sm font-medium text-red-600">{sellPercentage.toFixed(1)}%</span>
+        <span className="text-sm font-medium text-green-600">{sellPercentage.toFixed(1)}%</span>
       </div>
       </div>
 
@@ -81,7 +81,7 @@ export default function BookList({ initialData }: BookListProps) {
             {buyOrders.map((order, index) => (
               <div key={`buy-${order.price}-${order.quantity}-${index}`} className="grid grid-cols-2 gap-2 py-1 text-sm">
                 <div className="text-left text-gray-700">{order.quantity}</div>
-                <div className="text-right font-medium text-green-600">
+                <div className="text-right font-medium text-red-600">
                   {order.price.toFixed(2)}
                 </div>
               </div>
@@ -92,7 +92,7 @@ export default function BookList({ initialData }: BookListProps) {
           <div className="space-y-1">
             {sellOrders.reverse().map((order, index) => (
               <div key={`sell-${order.price}-${order.quantity}-${index}`} className="grid grid-cols-2 gap-2 py-1 text-sm">
-                <div className="text-right font-medium text-red-600">
+                <div className="text-right font-medium text-green-600">
                   {order.price.toFixed(2)}
                 </div>
                 <div className="text-right text-gray-700">{order.quantity}</div>

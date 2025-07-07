@@ -36,7 +36,7 @@ export default function TradeHeader() {
       : 0;
 
   const priceColor =
-    priceChangePercent >= 0 ? "text-green-600" : "text-red-600";
+    priceChangePercent >= 0 ? "text-red-600" : "text-green-600";
 
   return (
     <div className="h-full w-full bg-gray-100 rounded-xl grid grid-cols-2">
