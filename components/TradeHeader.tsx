@@ -43,7 +43,7 @@ export default function TradeHeader() {
       <div className="flex flex-col items-center justify-center">
         <p className="text-gray-600 text-sm">最新成交价</p>
         <p className={`font-semibold ${priceColor}`}>
-          ¥ {lastPrice ? lastPrice.toFixed(2) : "Loading..."}
+          ¥ {lastPrice ? lastPrice.toFixed(2) : "0.00"}
         </p>
       </div>
       <div className="flex flex-col items-center justify-center">

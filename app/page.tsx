@@ -11,7 +11,7 @@ import type { DailyData } from "@/mock/data";
 // Note: In a real app, the base URL should come from an environment variable.
 async function getInitialData(): Promise<DailyData[]> {
   try {
-    const res = await fetch("/api/historical/1", {
+    const res = await fetch(`${process.env.APP_URL}/api/historical/1`, {
       cache: "no-store",
     });
     if (!res.ok) {
@@ -26,7 +26,7 @@ async function getInitialData(): Promise<DailyData[]> {
 
 async function getInitialOrderbook() {
   try {
-    const res = await fetch("/api/orderbook/1", {
+    const res = await fetch(`${process.env.APP_URL}/api/orderbook/1`, {
       cache: "no-store",
     });
     if (!res.ok) {
@@ -41,7 +41,7 @@ async function getInitialOrderbook() {
 
 async function getInitialTrades() {
   try {
-    const res = await fetch("/api/trades/1", {
+    const res = await fetch(`${process.env.APP_URL}/api/trades/1`, {
       cache: "no-store",
     });
     if (!res.ok) {

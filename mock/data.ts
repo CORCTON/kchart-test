@@ -44,7 +44,7 @@ export interface ProjectData {
 const generateRandomData = (id: string): ProjectData => {
   const historical: DailyData[] = [];
   const today = new Date();
-  for (let i = 6; i >= 0; i--) {
+  for (let i = 30; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(today.getDate() - i);
     historical.push({
