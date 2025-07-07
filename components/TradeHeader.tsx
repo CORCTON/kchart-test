@@ -39,7 +39,7 @@ export default function TradeHeader() {
     priceChangePercent >= 0 ? "text-green-600" : "text-red-600";
 
   return (
-    <div className="h-[12vh] w-full bg-gray-100 rounded-xl grid grid-cols-2">
+    <div className="h-full w-full bg-gray-100 rounded-xl grid grid-cols-2">
       <div className="flex flex-col items-center justify-center">
         <p className="text-gray-600 text-sm">最新成交价</p>
         <p className={`font-semibold ${priceColor}`}>

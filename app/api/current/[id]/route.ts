@@ -38,8 +38,8 @@ export async function GET(
               : price < projectData.current.open * 0.9
               ? "down"
               : "none",
-          buy_volume: Math.floor(Math.random() * 100),
-          sell_volume: Math.floor(Math.random() * 100),
+          buy_volume: Math.floor(Math.random() * 10000),
+          sell_volume: Math.floor(Math.random() * 10000),
         });
 
         let lastMinute = -1;
@@ -64,8 +64,8 @@ export async function GET(
           lastDataPoint.time = currentTime;
           lastDataPoint.price = newPrice;
           lastDataPoint.limit_status = createNewDataPoint(newPrice).limit_status; // Recalculate status
-          lastDataPoint.buy_volume += Math.floor(Math.random() * 10);
-          lastDataPoint.sell_volume += Math.floor(Math.random() * 10);
+          lastDataPoint.buy_volume += Math.floor(Math.random() * 50);
+          lastDataPoint.sell_volume += Math.floor(Math.random() * 50);
         }
 
         // Keep the data array from growing too large

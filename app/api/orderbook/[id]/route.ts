@@ -16,10 +16,16 @@ export async function GET(
   if (Math.random() > 0.5 && projectData.orderbook.length > 5) {
     projectData.orderbook.shift(); // Remove an old order
   } else {
+    const currentData = projectData.current.data;
+    const basePrice = 
+      currentData.length > 0 
+        ? currentData[currentData.length - 1].price 
+        : projectData.current.open;
+    
     const newOrder: Order = {
       type: Math.random() > 0.5 ? 'buy' : 'sell',
-      quantity: Math.floor(Math.random() * 100),
-      price: projectData.current.data[projectData.current.data.length - 1].price + (Math.random() - 0.5) * 5,
+      quantity: Math.floor(Math.random() * 100) + 1,
+      price: basePrice + (Math.random() - 0.5) * 10,
     };
     projectData.orderbook.push(newOrder); // Add a new order
   }

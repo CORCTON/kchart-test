@@ -49,9 +49,9 @@ export default function Tabs({
   const activeTabContent = tabs.find((tab) => tab.value === activeTab)?.content;
 
   return (
-    <div className={cn("w-full", className)}>
+    <div className={cn("w-full h-full flex flex-col", className)}>
       {/* Tab List */}
-      <div className={cn("relative", tabListClassName)}>
+      <div className={cn("relative flex-shrink-0", tabListClassName)}>
         <div className="flex space-x-0">
           {tabs.map((tab) => (
             <button
@@ -82,7 +82,7 @@ export default function Tabs({
       </div>
 
       {/* Tab Content */}
-      <div className={cn("pt-4", tabContentClassName)}>
+      <div className={cn("pt-4 flex-1 overflow-hidden", tabContentClassName)}>
         {activeTabContent}
       </div>
     </div>
