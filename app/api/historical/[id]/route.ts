@@ -3,7 +3,7 @@ import { mockData } from '@/mock/data';
 
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params:  Promise<{ id: string }> }
 ) {
   const { id: projectId } = await params;
   const projectData = mockData.find((p) => p.id === projectId);
