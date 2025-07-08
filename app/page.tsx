@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic";
-
 import TradeHeader from "@/components/TradeHeader";
 import TradeKCharts from "@/components/TradeKCharts";
 import BookList from "@/components/BookList";

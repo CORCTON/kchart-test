@@ -67,6 +67,7 @@ export interface TradeSummaryData {
 export async function fetchOrderBook(projectId: string): Promise<OrderBookData> {
   const response = await fetch(`${API_BASE_URL}/v1/nft/match/order-book/${projectId}`, {
     headers: createHeaders(),
+    next: { revalidate: 60 },
   });
   if (!response.ok) {
     throw new Error(`Failed to fetch order book: ${response.statusText}`);
@@ -81,6 +82,7 @@ export async function fetchOrderBook(projectId: string): Promise<OrderBookData> 
 export async function fetchTradeHistory(projectId: string, page: number = 1): Promise<TradeHistoryData> {
   const response = await fetch(`${API_BASE_URL}/v1/nft/match/trade-history/${projectId}?page=${page}`, {
     headers: createHeaders(),
+    next: { revalidate: 60 },
   });
   if (!response.ok) {
     throw new Error(`Failed to fetch trade history: ${response.statusText}`);
@@ -95,6 +97,7 @@ export async function fetchTradeHistory(projectId: string, page: number = 1): Pr
 export async function fetchTradeSummary(projectId: string, limitDays: number = 14): Promise<TradeSummaryData> {
   const response = await fetch(`${API_BASE_URL}/v1/nft/match/trade-summary/${projectId}?limit_days=${limitDays}`, {
     headers: createHeaders(),
+    next: { revalidate: 3600 },
   });
   if (!response.ok) {
     throw new Error(`Failed to fetch trade summary: ${response.statusText}`);
