@@ -9,12 +9,10 @@ import { fetchTradeSummary, fetchOrderBook, fetchTradeHistory } from "@/lib/api"
 import { transformOrderBookToOrders, transformTradeHistoryToTrades, transformTradeSummaryToDaily } from "@/lib/transforms";
 
 // Fetch data on the server for SSR
-const PROJECT_ID = process.env.PROJECT_ID || 'cd9cb95d-f76b-4b1a-af14-ec26aef84772';
-
-async function getCandleData() {
+async function getCandleData(projectId: string) {
   try {
     // Fetch daily summary data and transform it for the K-chart
-    const tradeSummaryResponse = await fetchTradeSummary(PROJECT_ID, 14); // Fetch last 14 days
+    const tradeSummaryResponse = await fetchTradeSummary(projectId, 14); // Fetch last 14 days
     return transformTradeSummaryToDaily(tradeSummaryResponse);
   } catch (error) {
     console.error('Failed to fetch candle data:', error);
@@ -22,9 +20,9 @@ async function getCandleData() {
   }
 }
 
-async function getOrderbookData() {
+async function getOrderbookData(projectId: string) {
   try {
-    const response = await fetchOrderBook(PROJECT_ID);
+    const response = await fetchOrderBook(projectId);
     return transformOrderBookToOrders(response);
   } catch (error) {
     console.error('Failed to fetch orderbook data:', error);
@@ -32,9 +30,9 @@ async function getOrderbookData() {
   }
 }
 
-async function getTradesData() {
+async function getTradesData(projectId: string) {
   try {
-    const response = await fetchTradeHistory(PROJECT_ID, 1);
+    const response = await fetchTradeHistory(projectId, 1);
     // No need to log here again as it's logged in getCandleData
     return transformTradeHistoryToTrades(response);
   } catch (error) {
@@ -43,10 +41,13 @@ async function getTradesData() {
   }
 }
 
-async function getTradeSummaryData() {
+async function getTradeSummaryData(projectId: string) {
     try {
-        const response = await fetchTradeSummary(PROJECT_ID, 1); // Fetch 1-day summary
-        const summary = response.trade_summary?.[0];
+        const response = await fetchTradeSummary(projectId, 1); // Fetch 1-day summary
+        if (!response.trade_summary || response.trade_summary.length === 0) {
+          return null;
+        }
+        const summary = response.trade_summary[0];
         return summary ? {
             latestPrice: parseFloat(summary.latest_trade_price),
             priceChangeRate: parseFloat(summary.price_change_rate),
@@ -57,29 +58,39 @@ async function getTradeSummaryData() {
     }
 }
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: { projectId?: string } }) {
+  const projectId = searchParams.projectId;
+
+  if (!projectId) {
+    return <div className="flex h-screen items-center justify-center">未找到项目 ID</div>;
+  }
+
   const [
     candleData,
     orderbookData,
     tradesData,
     summaryData
   ] = await Promise.all([
-    getCandleData(),
-    getOrderbookData(),
-    getTradesData(),
-    getTradeSummaryData(),
+    getCandleData(projectId),
+    getOrderbookData(projectId),
+    getTradesData(projectId),
+    getTradeSummaryData(projectId),
   ]);
+
+  if (!summaryData) {
+    return <div className="flex h-screen items-center justify-center">未找到项目 ID</div>;
+  }
 
   const tabData = [
     {
       value: "book",
       label: "订单簿",
-      content: <BookList initialData={orderbookData} />,
+      content: <BookList initialData={orderbookData} projectId={projectId} />,
     },
     {
       value: "tickers",
       label: "交易动态",
-      content: <TickersList initialData={tradesData} />,
+      content: <TickersList initialData={tradesData} projectId={projectId} />,
     },
   ];
 
@@ -87,14 +98,15 @@ export default async function Home() {
     <div className="flex h-screen flex-col gap-4">
       {/* 交易统计信息 */}
       <div className="h-[calc((100vh-2rem)*0.12)] w-full">
-        <TradeHeader 
+        <TradeHeader
           latestPrice={summaryData?.latestPrice}
           priceChangeRate={summaryData?.priceChangeRate}
+          projectId={projectId}
         />
       </div>
       {/* K线图 */}
       <div className="h-[calc((100vh-2rem)*0.44)] w-full">
-        <TradeKCharts initialData={candleData} />
+        <TradeKCharts initialData={candleData} projectId={projectId} />
       </div>
       {/* 交易动态和订单簿 */}
       <div className="h-[calc((100vh-2rem)*0.44)] w-full">

@@ -1,23 +1,26 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Order } from '@/mock/data';
 import { fetchOrderBook } from '@/lib/api';
 import { transformOrderBookToOrders } from '@/lib/transforms';
 
 interface BookListProps {
   initialData: Order[];
+  projectId: string;
 }
 
-const PROJECT_ID = process.env.NEXT_PUBLIC_PROJECT_ID || 'cd9cb95d-f76b-4b1a-af14-ec26aef84772';
-
-export default function BookList({ initialData }: BookListProps) {
+export default function BookList({ initialData, projectId }: BookListProps) {
   const [orderbook, setOrderbook] = useState<Order[]>(initialData);
+  const [visibleCount, setVisibleCount] = useState(10); // 控制可见的订单数量
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // 获取并设置订单簿数据
   useEffect(() => {
     const fetchOrderbookData = async () => {
+      if (!projectId) return;
       try {
-        const response = await fetchOrderBook(PROJECT_ID);
+        const response = await fetchOrderBook(projectId);
         const orders = transformOrderBookToOrders(response);
         setOrderbook(orders);
       } catch (error) {
@@ -25,21 +28,43 @@ export default function BookList({ initialData }: BookListProps) {
       }
     };
 
-    // 每3秒更新一次订单簿数据
-    const interval = setInterval(fetchOrderbookData, 3000);
-    return () => clearInterval(interval);
+    fetchOrderbookData(); // 初始加载
+  }, [projectId]);
+
+  // 处理滚动事件，实现无限加载
+  const handleScroll = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (container) {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      // 当滚动到底部附近时加载更多
+      if (scrollTop + clientHeight >= scrollHeight - 20) {
+        setVisibleCount(prevCount => prevCount + 10); // 每次多显示10条
+      }
+    }
   }, []);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+    }
+    return () => {
+      if (container) {
+        container.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [handleScroll]);
 
   // 分离买单和卖单，并按价格排序
   const buyOrders = orderbook
     .filter(order => order.type === 'buy')
     .sort((a, b) => b.price - a.price) // 买单按价格从高到低排序
-    .slice(0, 10); // 显示更多订单以测试滚动
+    .slice(0, visibleCount);
   
   const sellOrders = orderbook
     .filter(order => order.type === 'sell')
     .sort((a, b) => a.price - b.price) // 卖单按价格从低到高排序
-    .slice(0, 10); // 显示更多订单以测试滚动
+    .slice(0, visibleCount);
 
   const totalBuyVolume = buyOrders.reduce((sum, order) => sum + order.quantity, 0);
   const totalSellVolume = sellOrders.reduce((sum, order) => sum + order.quantity, 0);
@@ -77,7 +102,7 @@ export default function BookList({ initialData }: BookListProps) {
         </div>
 
         {/* 可滚动的订单数据区域 */}
-        <div className="grid grid-cols-2 gap-4 h-[calc(100%)] overflow-y-auto">
+        <div ref={scrollContainerRef} className="grid grid-cols-2 gap-4 h-[calc(100%)] overflow-y-auto">
           {/* 买单区域 - 左侧 */}
           <div className="space-y-1">
             {buyOrders.map((order, index) => (

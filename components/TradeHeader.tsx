@@ -5,24 +5,25 @@
 import { useState, useEffect } from "react";
 import { fetchTradeSummary } from "@/lib/api";
 
-const PROJECT_ID = process.env.NEXT_PUBLIC_PROJECT_ID || 'cd9cb95d-f76b-4b1a-af14-ec26aef84772';
-
 interface TradeHeaderProps {
   latestPrice?: number | null;
   priceChangeRate?: number | null;
+  projectId: string;
 }
 
 export default function TradeHeader({
   latestPrice: initialLatestPrice,
   priceChangeRate: initialPriceChangeRate,
+  projectId,
 }: TradeHeaderProps) {
   const [latestPrice, setLatestPrice] = useState(initialLatestPrice);
   const [priceChangeRate, setPriceChangeRate] = useState(initialPriceChangeRate);
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!projectId) return;
       try {
-        const response = await fetchTradeSummary(PROJECT_ID, 1);
+        const response = await fetchTradeSummary(projectId, 1);
         const summary = response.trade_summary?.[0];
         if (summary) {
           setLatestPrice(parseFloat(summary.latest_trade_price));
@@ -35,7 +36,7 @@ export default function TradeHeader({
 
     const interval = setInterval(fetchData, 5000); // Poll every 5 seconds
     return () => clearInterval(interval);
-  }, []);
+  }, [projectId]);
 
   const priceChange = priceChangeRate || 0;
   const priceColor = priceChange >= 0 ? "text-red-600" : "text-green-600";

@@ -42,11 +42,10 @@ const formatVolumeData = (data: DailyData[], factor: number) => {
 
 interface TradeKChartsProps {
   initialData: DailyData[];
+  projectId: string;
 }
 
-const PROJECT_ID = process.env.NEXT_PUBLIC_PROJECT_ID || 'cd9cb95d-f76b-4b1a-af14-ec26aef84772';
-
-export default function TradeKCharts({ initialData }: TradeKChartsProps) {
+export default function TradeKCharts({ initialData, projectId }: TradeKChartsProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -255,8 +254,9 @@ export default function TradeKCharts({ initialData }: TradeKChartsProps) {
 
     // Polling for current data every 5 seconds
     const pollCurrentData = async () => {
+      if (!projectId) return;
       try {
-        const response = await fetchTradeSummary(PROJECT_ID, 1);
+        const response = await fetchTradeSummary(projectId, 1);
         const newData = transformTradeSummaryToDaily(response);
         const lastDataPoint = dataRef.current[dataRef.current.length - 1];
 
@@ -307,8 +307,9 @@ export default function TradeKCharts({ initialData }: TradeKChartsProps) {
 
     // Fetch historical data every hour for incremental updates
     const fetchHistoricalUpdates = async () => {
+      if (!projectId) return;
       try {
-        const response = await fetchTradeSummary(PROJECT_ID, 14);
+        const response = await fetchTradeSummary(projectId, 14);
         const newData = transformTradeSummaryToDaily(response);
 
         if (newData.length > 0) {
@@ -341,7 +342,7 @@ export default function TradeKCharts({ initialData }: TradeKChartsProps) {
       clearInterval(historicalInterval);
       chartRef.current?.remove();
     };
-  }, []);
+  }, [projectId]);
 
   return (
     <div className="w-full h-full flex flex-col relative">
