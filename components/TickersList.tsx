@@ -87,7 +87,7 @@ export default function TickersList({ initialData, projectId }: TickersListProps
       {/* 交易列表 */}
       <div
         ref={scrollContainerRef}
-        className="mt-3 space-y-2 overflow-y-auto"
+        className="mt-3 space-y-2 overflow-y-auto no-scrollbar"
         style={{ height: "calc(100%)" }}
       >
         {trades.map((trade, index) => {

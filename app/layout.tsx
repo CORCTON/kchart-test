@@ -13,7 +13,7 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="zh">
-			<body className="p-0 m-0">
+			<body className="p-0 m-0 select-none">
 				{children}
 			</body>
 		</html>
