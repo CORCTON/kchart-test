@@ -9,14 +9,16 @@ import {
   LineStyle,
   type Time,
 } from "lightweight-charts";
-import type { CurrentData, DailyData } from "@/mock/data";
+import type { DailyData } from "@/mock/data";
 import { useEffect, useRef } from "react";
 import type { MouseEventParams } from "lightweight-charts";
+import { fetchTradeSummary } from "@/lib/api";
+import { transformTradeSummaryToDaily } from "@/lib/transforms";
 
 // Helper function to format data for the price chart
 const formatChartData = (data: DailyData[]) => {
   return data.map((d) => ({
-    time: d.date as Time,
+    time: d.time as Time,
     value: d.close,
   }));
 };
@@ -24,13 +26,13 @@ const formatChartData = (data: DailyData[]) => {
 // Helper function to format volume data for the volume chart
 const formatVolumeData = (data: DailyData[], factor: number) => {
   const totalVolumeData = data.map((d) => ({
-    time: d.date as Time,
+    time: d.time as Time,
     value: (d.buy_volume + d.sell_volume) / factor,
     color: "#ef4444",
   }));
 
   const sellVolumeData = data.map((d) => ({
-    time: d.date as Time,
+    time: d.time as Time,
     value: d.sell_volume / factor,
     color: "#22c55e",
   }));
@@ -41,6 +43,8 @@ const formatVolumeData = (data: DailyData[], factor: number) => {
 interface TradeKChartsProps {
   initialData: DailyData[];
 }
+
+const PROJECT_ID = process.env.NEXT_PUBLIC_PROJECT_ID || 'cd9cb95d-f76b-4b1a-af14-ec26aef84772';
 
 export default function TradeKCharts({ initialData }: TradeKChartsProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -85,12 +89,14 @@ export default function TradeKCharts({ initialData }: TradeKChartsProps) {
         timeVisible: true,
         secondsVisible: false,
         ticksVisible: true,
-        tickMarkFormatter: (time: Time) =>
-          new Date(time as string).toLocaleDateString("zh-CN", {
+        tickMarkFormatter: (time: number) => {
+          const date = new Date(time * 1000);
+          return date.toLocaleDateString("zh-CN", {
             year: "numeric",
             month: "2-digit",
             day: "2-digit",
-          }),
+          });
+        },
       },
       rightPriceScale: { borderColor: "transparent" },
       leftPriceScale: { visible: false },
@@ -147,7 +153,7 @@ export default function TradeKCharts({ initialData }: TradeKChartsProps) {
 
     const renderTooltipContent = (dataPoint: DailyData) => {
       const dataIndex = dataRef.current.findIndex(
-        (d) => d.date === dataPoint.date,
+        (d) => d.time === dataPoint.time,
       );
       const isLastPoint = dataIndex === dataRef.current.length - 1;
 
@@ -155,7 +161,7 @@ export default function TradeKCharts({ initialData }: TradeKChartsProps) {
         dataIndex > 0
           ? dataRef.current[dataIndex - 1].close
           : dataPoint.open;
-      const change = ((dataPoint.close - prevClose) / prevClose) * 100;
+      const change = prevClose === 0 ? 0 : ((dataPoint.close - prevClose) / prevClose) * 100;
       const changeColor = change >= 0 ? "text-red-400" : "text-green-400";
       let limitStatus = "";
       if (change >= 9.95) limitStatus = "涨停";
@@ -180,7 +186,7 @@ export default function TradeKCharts({ initialData }: TradeKChartsProps) {
         return;
 
       priceLabelEl.innerText = isLastPoint ? "最新价" : "收盘价";
-      timeEl.innerText = new Date(dataPoint.date).toLocaleDateString("zh-CN", {
+      timeEl.innerText = new Date(dataPoint.time * 1000).toLocaleDateString("zh-CN", {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
@@ -214,7 +220,7 @@ export default function TradeKCharts({ initialData }: TradeKChartsProps) {
         tooltip.style.display = "none";
         return;
       }
-      const dataPoint = dataRef.current.find((d) => d.date === param.time);
+      const dataPoint = dataRef.current.find((d) => d.time === param.time);
       if (!dataPoint) {
         tooltip.style.display = "none";
         return;
@@ -247,47 +253,92 @@ export default function TradeKCharts({ initialData }: TradeKChartsProps) {
     };
     setTimeout(handleResize, 100);
 
-    const eventSource = new EventSource("/api/current/1");
-    eventSource.onmessage = (event) => {
-      const currentData: CurrentData = JSON.parse(event.data);
-      const lastDataPoint = dataRef.current[dataRef.current.length - 1];
-      if (
-        currentData.data.length > 0 && seriesRef.current &&
-        totalVolumeSeriesRef.current && sellVolumeSeriesRef.current &&
-        lastDataPoint
-      ) {
-        const latestCurrentData = currentData.data[currentData.data.length - 1];
-        const newPrice = latestCurrentData.price;
-
-        seriesRef.current.update({ time: lastDataPoint.date as Time, value: newPrice });
-        totalVolumeSeriesRef.current.update({
-          time: lastDataPoint.date as Time,
-          value:
-            (latestCurrentData.buy_volume + latestCurrentData.sell_volume) /
-            volumeFactorRef.current,
-        });
-        sellVolumeSeriesRef.current.update({
-          time: lastDataPoint.date as Time,
-          value: latestCurrentData.sell_volume / volumeFactorRef.current,
-        });
-
-        lastDataPoint.close = newPrice;
-        lastDataPoint.buy_volume = latestCurrentData.buy_volume;
-        lastDataPoint.sell_volume = latestCurrentData.sell_volume;
+    // Polling for current data every 5 seconds
+    const pollCurrentData = async () => {
+      try {
+        const response = await fetchTradeSummary(PROJECT_ID, 1);
+        const newData = transformTradeSummaryToDaily(response);
+        const lastDataPoint = dataRef.current[dataRef.current.length - 1];
 
         if (
-          tooltip.style.display === "block" &&
-          lastCrosshairTimeRef.current === lastDataPoint.date
+          newData.length > 0 &&
+          seriesRef.current &&
+          totalVolumeSeriesRef.current &&
+          sellVolumeSeriesRef.current &&
+          lastDataPoint
         ) {
-          renderTooltipContent(lastDataPoint);
+          const latestData = newData[0];
+          seriesRef.current.update({
+            time: lastDataPoint.time as Time,
+            value: latestData.close,
+          });
+          totalVolumeSeriesRef.current.update({
+            time: lastDataPoint.time as Time,
+            value:
+              (latestData.buy_volume + latestData.sell_volume) /
+              volumeFactorRef.current,
+          });
+          sellVolumeSeriesRef.current.update({
+            time: lastDataPoint.time as Time,
+            value: latestData.sell_volume / volumeFactorRef.current,
+          });
+
+          // Update the last data point in the ref
+          lastDataPoint.close = latestData.close;
+          lastDataPoint.buy_volume = latestData.buy_volume;
+          lastDataPoint.sell_volume = latestData.sell_volume;
+          lastDataPoint.open = latestData.open;
+
+          // If the tooltip is visible and showing the last data point, update it
+          if (
+            tooltip.style.display === "block" &&
+            lastCrosshairTimeRef.current === lastDataPoint.time
+          ) {
+            renderTooltipContent(lastDataPoint);
+          }
         }
+      } catch (error) {
+        console.error("Error fetching current data:", error);
       }
     };
+
+    // Start polling
+    const pollInterval = setInterval(pollCurrentData, 5000);
+
+    // Fetch historical data every hour for incremental updates
+    const fetchHistoricalUpdates = async () => {
+      try {
+        const response = await fetchTradeSummary(PROJECT_ID, 14);
+        const newData = transformTradeSummaryToDaily(response);
+
+        if (newData.length > 0) {
+          dataRef.current = newData;
+
+          // Update chart with new data
+          const formattedData = formatChartData(dataRef.current);
+          const { totalVolumeData, sellVolumeData } = formatVolumeData(
+            dataRef.current,
+            volumeFactorRef.current
+          );
+
+          seriesRef.current?.setData(formattedData);
+          totalVolumeSeriesRef.current?.setData(totalVolumeData);
+          sellVolumeSeriesRef.current?.setData(sellVolumeData);
+          chartRef.current?.timeScale().fitContent();
+        }
+      } catch (error) {
+        console.error("Error fetching historical updates:", error);
+      }
+    };
+
+    // Start hourly historical updates
+    const historicalInterval = setInterval(fetchHistoricalUpdates, 60 * 60 * 1000); // Every hour
 
     window.addEventListener("resize", handleResize);
     return () => {
       window.removeEventListener("resize", handleResize);
-      eventSource.close();
+      clearInterval(pollInterval);
+      clearInterval(historicalInterval);
       chartRef.current?.remove();
     };
   }, []);

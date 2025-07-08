@@ -5,72 +5,81 @@ import TradeKCharts from "@/components/TradeKCharts";
 import BookList from "@/components/BookList";
 import TickersList from "@/components/TickersList";
 import Tabs from "@/components/ui/tabs";
-import type { DailyData } from "@/mock/data";
+import { fetchTradeSummary, fetchOrderBook, fetchTradeHistory } from "@/lib/api";
+import { transformOrderBookToOrders, transformTradeHistoryToTrades, transformTradeSummaryToDaily } from "@/lib/transforms";
 
-// Fetch data on the server for SSR.
-// Note: In a real app, the base URL should come from an environment variable.
-async function getInitialData(): Promise<DailyData[]> {
-  try {
-    const res = await fetch(`${process.env.APP_URL}/api/historical/1`, {
-      cache: "no-store",
-    });
-    if (!res.ok) {
-      throw new Error("Failed to fetch initial data");
-    }
-    return res.json();
-  } catch (error) {
-    console.error(error);
-    return []; 
-  }
-}
+// Fetch data on the server for SSR
+const PROJECT_ID = process.env.PROJECT_ID || 'cd9cb95d-f76b-4b1a-af14-ec26aef84772';
 
-async function getInitialOrderbook() {
+async function getCandleData() {
   try {
-    const res = await fetch(`${process.env.APP_URL}/api/orderbook/1`, {
-      cache: "no-store",
-    });
-    if (!res.ok) {
-      throw new Error("Failed to fetch orderbook data");
-    }
-    return res.json();
+    // Fetch daily summary data and transform it for the K-chart
+    const tradeSummaryResponse = await fetchTradeSummary(PROJECT_ID, 14); // Fetch last 14 days
+    return transformTradeSummaryToDaily(tradeSummaryResponse);
   } catch (error) {
-    console.error(error);
+    console.error('Failed to fetch candle data:', error);
     return [];
   }
 }
 
-async function getInitialTrades() {
+async function getOrderbookData() {
   try {
-    const res = await fetch(`${process.env.APP_URL}/api/trades/1`, {
-      cache: "no-store",
-    });
-    if (!res.ok) {
-      throw new Error("Failed to fetch trades data");
-    }
-    return res.json();
+    const response = await fetchOrderBook(PROJECT_ID);
+    return transformOrderBookToOrders(response);
   } catch (error) {
-    console.error(error);
+    console.error('Failed to fetch orderbook data:', error);
     return [];
   }
+}
+
+async function getTradesData() {
+  try {
+    const response = await fetchTradeHistory(PROJECT_ID, 1);
+    // No need to log here again as it's logged in getCandleData
+    return transformTradeHistoryToTrades(response);
+  } catch (error) {
+    console.error('Failed to fetch trades data:', error);
+    return [];
+  }
+}
+
+async function getTradeSummaryData() {
+    try {
+        const response = await fetchTradeSummary(PROJECT_ID, 1); // Fetch 1-day summary
+        const summary = response.trade_summary?.[0];
+        return summary ? {
+            latestPrice: parseFloat(summary.latest_trade_price),
+            priceChangeRate: parseFloat(summary.price_change_rate),
+        } : null;
+    } catch (error) {
+        console.error('Failed to fetch trade summary:', error);
+        return null;
+    }
 }
 
 export default async function Home() {
-  const [initialData, initialOrderbook, initialTrades] = await Promise.all([
-    getInitialData(),
-    getInitialOrderbook(),
-    getInitialTrades(),
+  const [
+    candleData,
+    orderbookData,
+    tradesData,
+    summaryData
+  ] = await Promise.all([
+    getCandleData(),
+    getOrderbookData(),
+    getTradesData(),
+    getTradeSummaryData(),
   ]);
 
   const tabData = [
     {
       value: "book",
       label: "订单簿",
-      content: <BookList initialData={initialOrderbook} />,
+      content: <BookList initialData={orderbookData} />,
     },
     {
       value: "tickers",
       label: "交易动态",
-      content: <TickersList initialData={initialTrades} />,
+      content: <TickersList initialData={tradesData} />,
     },
   ];
 
@@ -78,11 +87,14 @@ export default async function Home() {
     <div className="flex h-screen flex-col gap-4">
       {/* 交易统计信息 */}
       <div className="h-[calc((100vh-2rem)*0.12)] w-full">
-        <TradeHeader />
+        <TradeHeader 
+          latestPrice={summaryData?.latestPrice}
+          priceChangeRate={summaryData?.priceChangeRate}
+        />
       </div>
       {/* K线图 */}
       <div className="h-[calc((100vh-2rem)*0.44)] w-full">
-        <TradeKCharts initialData={initialData} />
+        <TradeKCharts initialData={candleData} />
       </div>
       {/* 交易动态和订单簿 */}
       <div className="h-[calc((100vh-2rem)*0.44)] w-full">

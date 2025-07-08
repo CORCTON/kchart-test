@@ -2,29 +2,31 @@
 
 import { useState, useEffect } from 'react';
 import type { Order } from '@/mock/data';
+import { fetchOrderBook } from '@/lib/api';
+import { transformOrderBookToOrders } from '@/lib/transforms';
 
 interface BookListProps {
   initialData: Order[];
 }
 
+const PROJECT_ID = process.env.NEXT_PUBLIC_PROJECT_ID || 'cd9cb95d-f76b-4b1a-af14-ec26aef84772';
+
 export default function BookList({ initialData }: BookListProps) {
   const [orderbook, setOrderbook] = useState<Order[]>(initialData);
 
   useEffect(() => {
-    const fetchOrderbook = async () => {
+    const fetchOrderbookData = async () => {
       try {
-        const res = await fetch('/api/orderbook/1');
-        if (res.ok) {
-          const data = await res.json();
-          setOrderbook(data);
-        }
+        const response = await fetchOrderBook(PROJECT_ID);
+        const orders = transformOrderBookToOrders(response);
+        setOrderbook(orders);
       } catch (error) {
         console.error('Failed to fetch orderbook:', error);
       }
     };
 
     // 每3秒更新一次订单簿数据
-    const interval = setInterval(fetchOrderbook, 3000);
+    const interval = setInterval(fetchOrderbookData, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -90,7 +92,7 @@ export default function BookList({ initialData }: BookListProps) {
 
           {/* 卖单区域 - 右侧 */}
           <div className="space-y-1">
-            {sellOrders.reverse().map((order, index) => (
+            {sellOrders.map((order, index) => (
               <div key={`sell-${order.price}-${order.quantity}-${index}`} className="grid grid-cols-2 gap-2 py-1 text-sm">
                 <div className="text-right font-medium text-green-600">
                   {order.price.toFixed(2)}

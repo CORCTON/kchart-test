@@ -1,10 +1,12 @@
 export interface DailyData {
-  date: string;
+  time: number; // UNIX timestamp in seconds
+  date?: string; // Keep for other potential uses, but chart uses `time`
   open: number;
   close: number;
-  limit_status: 'up' | 'down' | 'none';
+  volume: number;
   buy_volume: number;
   sell_volume: number;
+  limit_status?: 'up' | 'down' | 'none';
 }
 
 export interface CurrentDataPoint {
@@ -47,13 +49,20 @@ const generateRandomData = (id: string): ProjectData => {
   for (let i = 30; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(today.getDate() - i);
+    const open = Math.random() * 100 + 100;
+    const close = Math.random() * 100 + 100;
+    const buy_volume = Math.floor(Math.random() * 10000);
+    const sell_volume = Math.floor(Math.random() * 10000);
+    
     historical.push({
+      time: Math.floor(date.getTime() / 1000),
       date: date.toISOString().split('T')[0],
-      open: Math.random() * 100 + 100,
-      close: Math.random() * 100 + 100,
+      open,
+      close,
+      volume: buy_volume + sell_volume,
+      buy_volume,
+      sell_volume,
       limit_status: ['up', 'down', 'none'][Math.floor(Math.random() * 3)] as 'up' | 'down' | 'none',
-      buy_volume: Math.floor(Math.random() * 10000),
-      sell_volume: Math.floor(Math.random() * 10000),
     });
   }
 

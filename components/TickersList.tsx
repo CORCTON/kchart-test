@@ -2,10 +2,14 @@
 
 import { useEffect, useState } from "react";
 import type { Trade } from "@/mock/data";
+import { fetchTradeHistory } from "@/lib/api";
+import { transformTradeHistoryToTrades } from "@/lib/transforms";
 
 interface TickersListProps {
   initialData: Trade[];
 }
+
+const PROJECT_ID = process.env.NEXT_PUBLIC_PROJECT_ID || 'cd9cb95d-f76b-4b1a-af14-ec26aef84772';
 
 export default function TickersList({ initialData }: TickersListProps) {
   const [trades, setTrades] = useState<Trade[]>(
@@ -13,22 +17,20 @@ export default function TickersList({ initialData }: TickersListProps) {
   );
 
   useEffect(() => {
-    const fetchTrades = async () => {
+    const fetchTradesData = async () => {
       try {
-        const res = await fetch("/api/trades/1");
-        if (res.ok) {
-          const data = await res.json();
-          setTrades(
-            data.sort((a: Trade, b: Trade) => b.timestamp - a.timestamp),
-          );
-        }
+        const response = await fetchTradeHistory(PROJECT_ID, 1);
+        const tradesData = transformTradeHistoryToTrades(response);
+        setTrades(
+          tradesData.sort((a: Trade, b: Trade) => b.timestamp - a.timestamp),
+        );
       } catch (error) {
         console.error("Failed to fetch trades:", error);
       }
     };
 
     // 每2秒更新一次交易数据
-    const interval = setInterval(fetchTrades, 2000);
+    const interval = setInterval(fetchTradesData, 2000);
     return () => clearInterval(interval);
   }, []);
 
@@ -54,7 +56,7 @@ export default function TickersList({ initialData }: TickersListProps) {
       {/* 交易列表 */}
       <div
         className="mt-3 space-y-2 overflow-y-auto"
-        style={{ height: "calc(100% - 4rem)" }}
+        style={{ height: "calc(100%)" }}
       >
         {trades.slice(0, 15).map((trade, index) => {
           return (
