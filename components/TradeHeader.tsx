@@ -1,45 +1,33 @@
-
-
 "use client";
 
-import { useState, useEffect } from "react";
 import { fetchTradeSummary } from "@/lib/api";
-
+import { useSuspenseQuery } from "@tanstack/react-query";
 interface TradeHeaderProps {
-  latestPrice?: number | null;
-  priceChangeRate?: number | null;
   projectId: string;
 }
 
-export default function TradeHeader({
-  latestPrice: initialLatestPrice,
-  priceChangeRate: initialPriceChangeRate,
-  projectId,
-}: TradeHeaderProps) {
-  const [latestPrice, setLatestPrice] = useState(initialLatestPrice);
-  const [priceChangeRate, setPriceChangeRate] = useState(initialPriceChangeRate);
+export default function TradeHeader({ projectId }: TradeHeaderProps) {
+  const { data: realTimeData } = useSuspenseQuery({
+    queryKey: ["realTimeCandleData", projectId],
+    queryFn: () => fetchTradeSummary(projectId, 1),
+    refetchInterval: 5000, 
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!projectId) return;
-      try {
-        const response = await fetchTradeSummary(projectId, 1);
-        const summary = response.trade_summary?.[0];
-        if (summary) {
-          setLatestPrice(parseFloat(summary.latest_trade_price));
-          setPriceChangeRate(parseFloat(summary.price_change_rate));
-        }
-      } catch (error) {
-        console.error("Failed to fetch trade summary:", error);
-      }
-    };
-
-    const interval = setInterval(fetchData, 5000); // Poll every 5 seconds
-    return () => clearInterval(interval);
-  }, [projectId]);
-
-  const priceChange = priceChangeRate || 0;
-  const priceColor = priceChange >= 0 ? "text-red-600" : "text-green-600";
+  const summary = realTimeData.trade_summary?.[0];
+  const latestPrice = summary ? parseFloat(summary.latest_trade_price) : 0;
+  const priceChangeRate = summary ? parseFloat(summary.price_change_rate) : 0;
+  let priceColor = "text-gray-500";
+  switch (true) {
+    case priceChangeRate > 0:
+      priceColor = "text-red-600";
+      break;
+    case priceChangeRate < 0:
+      priceColor = "text-green-600";
+      break;
+    default:
+      priceColor = "text-gray-500";
+      break;
+  }
 
   return (
     <div className="h-full w-full bg-gray-100 rounded-xl grid grid-cols-2">
@@ -52,7 +40,7 @@ export default function TradeHeader({
       <div className="flex flex-col items-center justify-center">
         <p className="text-gray-600 text-sm">24h涨跌幅</p>
         <p className={`font-semibold ${priceColor}`}>
-          {priceChange.toFixed(2)}%
+          {priceChangeRate ? priceChangeRate.toFixed(2) : "0.00"}%
         </p>
       </div>
     </div>

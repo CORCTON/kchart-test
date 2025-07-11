@@ -1,8 +1,6 @@
-// API configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://sjb.debaox.cn';
 const AUTH_TOKEN = process.env.NEXT_PUBLIC_AUTH_TOKEN || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzZDZlMjBiMy1iZmE3LTQ0ODItODg1ZC0zYzRlN2NiZjQ4YjciLCJleHAiOjE3NTQ1NDg4NjUsImlhdCI6MTc1MTk1Njg2NSwianRpIjoiODYyMmI1ODYtYWZhNS00MTY0LThlNjgtNGU3YWFjZWE2NTY2In0.Z_aRnrOvSrnmOR8KJQiNLqrg66avZmI2wmwu3B0iKwE';
 
-// Helper function to create headers with authorization
 export function createHeaders(): HeadersInit {
   return {
     'Authorization': `Bearer ${AUTH_TOKEN}`,
@@ -10,14 +8,14 @@ export function createHeaders(): HeadersInit {
   };
 }
 
-// Generic API response wrapper
+// 通用的 API 响应包装器
 interface ApiResponse<T> {
   isSuccess: boolean;
   msg: string;
   data: T;
 }
 
-// Specific data structure types
+// 特定数据结构类型
 export interface OrderBookData {
   buy_orders: Array<{
     order_id: string;
@@ -63,7 +61,8 @@ export interface TradeSummaryData {
   }>;
 }
 
-// API client functions
+// API 客户端函数
+// 获取订单簿数据
 export async function fetchOrderBook(projectId: string): Promise<OrderBookData> {
   const response = await fetch(`${API_BASE_URL}/v1/nft/match/order-book/${projectId}`, {
     headers: createHeaders(),
@@ -79,6 +78,7 @@ export async function fetchOrderBook(projectId: string): Promise<OrderBookData> 
   return result.data;
 }
 
+// 获取交易历史数据
 export async function fetchTradeHistory(projectId: string, page: number = 1): Promise<TradeHistoryData> {
   const response = await fetch(`${API_BASE_URL}/v1/nft/match/trade-history/${projectId}?page=${page}`, {
     headers: createHeaders(),
@@ -94,6 +94,7 @@ export async function fetchTradeHistory(projectId: string, page: number = 1): Pr
   return result.data;
 }
 
+// 获取交易汇总数据
 export async function fetchTradeSummary(projectId: string, limitDays: number = 14): Promise<TradeSummaryData> {
   const response = await fetch(`${API_BASE_URL}/v1/nft/match/trade-summary/${projectId}?limit_days=${limitDays}`, {
     headers: createHeaders(),
@@ -109,9 +110,8 @@ export async function fetchTradeSummary(projectId: string, limitDays: number = 1
   return result.data;
 }
 
-// Additional API functions for real-time updates
+// 获取当前价格
 export async function fetchCurrentPrice(projectId: string): Promise<{ price: number; timestamp: number }> {
-  // Get latest trade from trade history as a proxy for current price
   const response = await fetchTradeHistory(projectId, 1);
   const trades = response.trade_history;
   
@@ -126,7 +126,7 @@ export async function fetchCurrentPrice(projectId: string): Promise<{ price: num
   throw new Error('No current price data available');
 }
 
-// Get latest trading data for real-time updates
+// 获取最新交易数据
 export async function fetchLatestTradingData(projectId: string) {
   const [tradeHistory, orderBook] = await Promise.all([
     fetchTradeHistory(projectId, 1),

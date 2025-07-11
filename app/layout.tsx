@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { QueryProvider } from "./provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,7 +15,9 @@ export default function RootLayout({
 	return (
 		<html lang="zh">
 			<body className="p-0 m-0 select-none">
-				{children}
+				<QueryProvider>
+					{children}
+				</QueryProvider>
 			</body>
 		</html>
 	);
