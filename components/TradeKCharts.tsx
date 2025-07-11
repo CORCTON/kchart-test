@@ -10,25 +10,16 @@ import {
   type MouseEventParams,
 } from "lightweight-charts";
 import { useEffect, useRef, useMemo } from "react";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { fetchTradeSummary } from "@/lib/api";
 import { transformTradeSummaryToDaily } from "@/lib/transforms";
 import { formatChartData, formatVolumeData } from "@/lib/chart-utils";
 import type { ChartData } from "@/types/trade";
+import type { TradeSummaryData } from "@/lib/api";
 
 interface TradeKChartsProps {
-  projectId: string;
+  tradeSummary: TradeSummaryData;
 }
 
-export default function TradeKCharts({ projectId }: TradeKChartsProps) {
-  const { data: tradeSummary } = useSuspenseQuery({
-    queryKey: ["tradeSummary", projectId],
-    queryFn: () => fetchTradeSummary(projectId, 14),
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    refetchInterval: false,
-    staleTime: 1000 * 60 * 60, // 1 hour
-  });
+export default function TradeKCharts({ tradeSummary }: TradeKChartsProps) {
 
   const chartData = useMemo(
     () => transformTradeSummaryToDaily(tradeSummary),

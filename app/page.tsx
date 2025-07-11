@@ -3,11 +3,10 @@ import {
   HydrationBoundary,
   QueryClient,
 } from "@tanstack/react-query";
-import TradeHeader from "@/components/TradeHeader";
-import TradeKCharts from "@/components/TradeKCharts";
 import BookList from "@/components/BookList";
 import TickersList from "@/components/TickersList";
 import Tabs from "@/components/ui/tabs";
+import TradeView from "@/components/TradeView";
 import {
   fetchOrderBook,
   fetchTradeHistory,
@@ -32,23 +31,19 @@ export default async function Home({
 
   const queryClient = new QueryClient();
 
-  await Promise.all([
-    // For TradeHeader
+  const [initialTradeSummary] = await Promise.all([
+    queryClient.fetchQuery({
+      queryKey: ["tradeSummary", projectId],
+      queryFn: () => fetchTradeSummary(projectId, 14),
+    }),
     queryClient.prefetchQuery({
       queryKey: ["realTimeCandleData", projectId],
       queryFn: () => fetchTradeSummary(projectId, 1),
     }),
-    // For TradeKCharts
-    queryClient.prefetchQuery({
-      queryKey: ["tradeSummary", projectId],
-      queryFn: () => fetchTradeSummary(projectId, 14),
-    }),
-    // For BookList
     queryClient.prefetchQuery({
       queryKey: ["orderBook", projectId],
       queryFn: () => fetchOrderBook(projectId),
     }),
-    // For TickersList
     queryClient.prefetchQuery({
       queryKey: ["tradeHistory", projectId],
       queryFn: () => fetchTradeHistory(projectId, 1),
@@ -71,14 +66,10 @@ export default async function Home({
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <div className="flex h-screen flex-col gap-4">
-        {/* 交易统计信息 */}
-        <div className="h-[calc((100vh-2rem)*0.12)] w-full">
-          <TradeHeader projectId={projectId} />
-        </div>
-        {/* K线图 */}
-        <div className="h-[calc((100vh-2rem)*0.44)] w-full">
-          <TradeKCharts projectId={projectId} />
-        </div>
+        <TradeView
+          projectId={projectId}
+          initialTradeSummary={initialTradeSummary}
+        />
         {/* 交易动态和订单簿 */}
         <div className="h-[calc((100vh-2rem)*0.44)] w-full">
           <Tabs tabs={tabData} defaultValue="book" className="w-full h-full" />

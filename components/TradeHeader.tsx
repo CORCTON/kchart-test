@@ -1,19 +1,13 @@
 "use client";
 
-import { fetchTradeSummary } from "@/lib/api";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import type { TradeSummaryData } from "@/lib/api";
+
 interface TradeHeaderProps {
-  projectId: string;
+  tradeSummary: TradeSummaryData;
 }
 
-export default function TradeHeader({ projectId }: TradeHeaderProps) {
-  const { data: realTimeData } = useSuspenseQuery({
-    queryKey: ["realTimeCandleData", projectId],
-    queryFn: () => fetchTradeSummary(projectId, 1),
-    refetchInterval: 5000, 
-  });
-
-  const summary = realTimeData.trade_summary?.[0];
+export default function TradeHeader({ tradeSummary }: TradeHeaderProps) {
+  const summary = tradeSummary.trade_summary?.[0];
   const latestPrice = summary ? parseFloat(summary.latest_trade_price) : 0;
   const priceChangeRate = summary ? parseFloat(summary.price_change_rate) : 0;
   let priceColor = "text-gray-500";
