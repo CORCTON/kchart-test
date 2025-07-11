@@ -23,8 +23,9 @@ export default async function Home({
 
   if (!projectId) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        请提供项目ID
+      <div className="flex h-screen flex-col items-center justify-center gap-4">
+        <h2 className="text-xl font-semibold">出错了！</h2>
+        <p>请提供项目ID。</p>
       </div>
     );
   }
