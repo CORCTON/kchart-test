@@ -15,9 +15,7 @@ export default function RootLayout({
 	return (
 		<html lang="zh">
 			<body className="p-0 m-0 select-none">
-				<QueryProvider>
-					{children}
-				</QueryProvider>
+				<QueryProvider>{children}</QueryProvider>
 			</body>
 		</html>
 	);
