@@ -1,12 +1,13 @@
+import { headers } from "next/headers";
+
 const API_BASE_URL =
 	process.env.NEXT_PUBLIC_API_BASE_URL || "https://sjb.debaox.cn";
-const AUTH_TOKEN =
-	process.env.NEXT_PUBLIC_AUTH_TOKEN ||
-	"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzZDZlMjBiMy1iZmE3LTQ0ODItODg1ZC0zYzRlN2NiZjQ4YjciLCJleHAiOjE3NTQ1NDg4NjUsImlhdCI6MTc1MTk1Njg2NSwianRpIjoiODYyMmI1ODYtYWZhNS00MTY0LThlNjgtNGU3YWFjZWE2NTY2In0.Z_aRnrOvSrnmOR8KJQiNLqrg66avZmI2wmwu3B0iKwE";
 
-export function createHeaders(): HeadersInit {
+export async function createHeaders(): Promise<HeadersInit> {
+	const headerList = await headers();
+	const authorization = headerList.get("authorization");
 	return {
-		Authorization: `Bearer ${AUTH_TOKEN}`,
+		Authorization: authorization || "",
 		"Content-Type": "application/json",
 	};
 }
@@ -72,7 +73,7 @@ export async function fetchOrderBook(
 	const response = await fetch(
 		`${API_BASE_URL}/v1/nft/match/order-book/${projectId}`,
 		{
-			headers: createHeaders(),
+			headers: await createHeaders(),
 			next: { revalidate: 60 },
 		},
 	);
@@ -94,7 +95,7 @@ export async function fetchTradeHistory(
 	const response = await fetch(
 		`${API_BASE_URL}/v1/nft/match/trade-history/${projectId}?page=${page}`,
 		{
-			headers: createHeaders(),
+			headers: await createHeaders(),
 			next: { revalidate: 60 },
 		},
 	);
@@ -116,7 +117,7 @@ export async function fetchTradeSummary(
 	const response = await fetch(
 		`${API_BASE_URL}/v1/nft/match/trade-summary/${projectId}?limit_days=${limitDays}`,
 		{
-			headers: createHeaders(),
+			headers: await createHeaders(),
 			next: { revalidate: 3600 },
 		},
 	);
