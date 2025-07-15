@@ -1,5 +1,5 @@
 # 第一阶段：构建
-FROM node:22.16.0-alpine3.21 AS builder
+FROM node:22.16.0-alpine3.21 AS deps
 ENV NODE_ENV=production
 WORKDIR /app
 RUN pnpm config set registry https://mirrors.cloud.tencent.com/npm/
