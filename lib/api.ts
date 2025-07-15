@@ -1,5 +1,4 @@
-const API_BASE_URL =
-	process.env.NEXT_PUBLIC_API_BASE_URL || "https://sjb.debaox.cn";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export function createHeaders(authorization?: string): HeadersInit {
 	const headers: HeadersInit = {
@@ -101,7 +100,9 @@ export async function fetchTradeHistory(
 		},
 	);
 	if (!response.ok) {
-		throw new Error(`Failed to fetch trade history: ${response.statusText}`);
+		throw new Error(
+			`Failed to fetch trade history: ${response.statusText}`,
+		);
 	}
 	const result: ApiResponse<TradeHistoryData> = await response.json();
 	if (!result.isSuccess) {
@@ -124,7 +125,9 @@ export async function fetchTradeSummary(
 		},
 	);
 	if (!response.ok) {
-		throw new Error(`Failed to fetch trade summary: ${response.statusText}`);
+		throw new Error(
+			`Failed to fetch trade summary: ${response.statusText}`,
+		);
 	}
 	const result: ApiResponse<TradeSummaryData> = await response.json();
 	if (!result.isSuccess) {
