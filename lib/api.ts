@@ -1,15 +1,14 @@
-import { headers } from "next/headers";
-
 const API_BASE_URL =
 	process.env.NEXT_PUBLIC_API_BASE_URL || "https://sjb.debaox.cn";
 
-export async function createHeaders(): Promise<HeadersInit> {
-	const headerList = await headers();
-	const authorization = headerList.get("authorization");
-	return {
-		Authorization: authorization || "",
+export function createHeaders(authorization?: string): HeadersInit {
+	const headers: HeadersInit = {
 		"Content-Type": "application/json",
 	};
+	if (authorization) {
+		headers.Authorization = authorization;
+	}
+	return headers;
 }
 
 // 通用的 API 响应包装器
@@ -69,11 +68,12 @@ export interface TradeSummaryData {
 // 获取订单簿数据
 export async function fetchOrderBook(
 	projectId: string,
+	authorization?: string,
 ): Promise<OrderBookData> {
 	const response = await fetch(
 		`${API_BASE_URL}/v1/nft/match/order-book/${projectId}`,
 		{
-			headers: await createHeaders(),
+			headers: createHeaders(authorization),
 			next: { revalidate: 60 },
 		},
 	);
@@ -91,11 +91,12 @@ export async function fetchOrderBook(
 export async function fetchTradeHistory(
 	projectId: string,
 	page: number = 1,
+	authorization?: string,
 ): Promise<TradeHistoryData> {
 	const response = await fetch(
 		`${API_BASE_URL}/v1/nft/match/trade-history/${projectId}?page=${page}`,
 		{
-			headers: await createHeaders(),
+			headers: createHeaders(authorization),
 			next: { revalidate: 60 },
 		},
 	);
@@ -113,11 +114,12 @@ export async function fetchTradeHistory(
 export async function fetchTradeSummary(
 	projectId: string,
 	limitDays: number = 14,
+	authorization?: string,
 ): Promise<TradeSummaryData> {
 	const response = await fetch(
 		`${API_BASE_URL}/v1/nft/match/trade-summary/${projectId}?limit_days=${limitDays}`,
 		{
-			headers: await createHeaders(),
+			headers: createHeaders(authorization),
 			next: { revalidate: 3600 },
 		},
 	);
@@ -134,8 +136,9 @@ export async function fetchTradeSummary(
 // 获取当前价格
 export async function fetchCurrentPrice(
 	projectId: string,
+	authorization?: string,
 ): Promise<{ price: number; timestamp: number }> {
-	const response = await fetchTradeHistory(projectId, 1);
+	const response = await fetchTradeHistory(projectId, 1, authorization);
 	const trades = response.trade_history;
 
 	if (trades && trades.length > 0) {
@@ -150,10 +153,13 @@ export async function fetchCurrentPrice(
 }
 
 // 获取最新交易数据
-export async function fetchLatestTradingData(projectId: string) {
+export async function fetchLatestTradingData(
+	projectId: string,
+	authorization?: string,
+) {
 	const [tradeHistory, orderBook] = await Promise.all([
-		fetchTradeHistory(projectId, 1),
-		fetchOrderBook(projectId),
+		fetchTradeHistory(projectId, 1, authorization),
+		fetchOrderBook(projectId, authorization),
 	]);
 
 	return {

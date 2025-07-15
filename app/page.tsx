@@ -12,13 +12,16 @@ import {
 	fetchTradeHistory,
 	fetchTradeSummary,
 } from "@/lib/api";
+import { headers } from "next/headers";
 
 export default async function Home({
 	searchParams,
 }: {
 	searchParams: { projectId?: string };
 }) {
-	const { projectId } = await searchParams;
+	const headerList = await headers();
+	const authorization = headerList.get("authorization");
+	const { projectId } = searchParams;
 
 	if (!projectId) {
 		return (
@@ -34,19 +37,19 @@ export default async function Home({
 	const [initialTradeSummary] = await Promise.all([
 		queryClient.fetchQuery({
 			queryKey: ["tradeSummary", projectId],
-			queryFn: () => fetchTradeSummary(projectId, 14),
+			queryFn: () => fetchTradeSummary(projectId, 14, authorization || ""),
 		}),
 		queryClient.prefetchQuery({
 			queryKey: ["realTimeCandleData", projectId],
-			queryFn: () => fetchTradeSummary(projectId, 1),
+			queryFn: () => fetchTradeSummary(projectId, 1, authorization || ""),
 		}),
 		queryClient.prefetchQuery({
 			queryKey: ["orderBook", projectId],
-			queryFn: () => fetchOrderBook(projectId),
+			queryFn: () => fetchOrderBook(projectId, authorization || ""),
 		}),
 		queryClient.prefetchQuery({
 			queryKey: ["tradeHistory", projectId],
-			queryFn: () => fetchTradeHistory(projectId, 1),
+			queryFn: () => fetchTradeHistory(projectId, 1, authorization || ""),
 		}),
 	]);
 
