@@ -14,14 +14,16 @@ import {
 } from "@/lib/api";
 import { headers } from "next/headers";
 
-export default async function Home({
-	searchParams,
-}: {
-	searchParams: { projectId?: string };
-}) {
+interface HomePageProps {
+	searchParams: Promise<{
+		projectId?: string;
+	}>;
+}
+
+export default async function Home({ searchParams }: HomePageProps) {
 	const headerList = await headers();
 	const authorization = headerList.get("authorization");
-	const { projectId } = searchParams;
+	const { projectId } = await searchParams;
 
 	if (!projectId) {
 		return (

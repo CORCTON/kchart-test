@@ -1,46 +1,68 @@
-# --- Stage 1: Build ---
-FROM node:22-alpine AS builder
+FROM node:22-alpine AS base
 
-# 设置工作目录
+# 依赖安装阶段
+FROM base AS deps
+# 安装 libc6-compat 依赖
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# 设置 pnpm 源
-RUN npm install -g pnpm && pnpm config set registry https://mirrors.cloud.tencent.com/npm/
+# 拷贝依赖文件
+COPY package.json pnpm-lock.yaml* ./
+# 安装 pnpm
+RUN npm install -g pnpm
+# 安装依赖
+RUN pnpm i --frozen-lockfile
 
-# 复制依赖描述文件
-COPY package.json pnpm-lock.yaml ./
 
-# 安装生产环境依赖
-RUN pnpm install --prod --frozen-lockfile
-
-# 复制所有项目文件
+# 构建阶段
+FROM base AS builder
+WORKDIR /app
+# 拷贝 node_modules
+COPY --from=deps /app/node_modules ./node_modules
+# 拷贝项目文件
 COPY . .
 
-# 构建应用
-RUN pnpm build
+# 在 builder 阶段同样需要安装 pnpm
+RUN npm install -g pnpm
 
-# --- Stage 2: Production ---
-FROM node:22-alpine
+# 构建时禁用 Next.js 遥测
+# ENV NEXT_TELEMETRY_DISABLED=1
 
-# 设置工作目录
+# 构建项目
+RUN pnpm run build
+
+# 生产镜像
+FROM base AS runner
 WORKDIR /app
 
-# 设置生产环境变量
 ENV NODE_ENV=production
+# 运行时禁用 Next.js 遥测
+# ENV NEXT_TELEMETRY_DISABLED=1
 
-# 从构建阶段复制必要的产物
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
-COPY --from=builder /app/.next ./.next
+# 创建用户和用户组
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# 拷贝 public 目录
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.ts ./next.config.ts
 
-# 安装生产依赖
-RUN npm install -g pnpm && pnpm config set registry https://mirrors.cloud.tencent.com/npm/
-RUN pnpm install --prod --frozen-lockfile
+# 设置 .next 目录权限
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+# 拷贝构建输出
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# 切换用户
+USER nextjs
 
 # 暴露端口
 EXPOSE 3000
 
+ENV PORT=3000
+
+# 设置主机名
+ENV HOSTNAME="0.0.0.0"
 # 启动命令
-CMD ["pnpm", "start"]
+CMD ["node", "server.js"]
